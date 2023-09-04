@@ -72,7 +72,6 @@ router.get('/posts/:postId/comments', async(req,res) => {
 
 
 /** 3. 댓글 수정 **/
-  // * 400 댓글 수정에 실패한 경우
 router.put('/posts/:postId/comments/:commentId', authMiddleware, async(req,res) => {
   try {
     const { userId } = req.user;
@@ -99,10 +98,14 @@ router.put('/posts/:postId/comments/:commentId', authMiddleware, async(req,res) 
       return res.status(404).json({ errorMessage: '댓글이 존재하지 않습니다' })
     };
 
-    await prisma.comments.update({
+    const isCommentUpdated = await prisma.comments.update({
       data: { comment },
       where: { PostId: +postId, commentId: +commentId }
     });
+
+    if (!isCommentUpdated) {
+      return res.status(401).json({ errorMessage: '댓글 수정이 정상적으로 처리되지 않았습니다' })
+    };
 
     return res.status(200).json({ message: '댓글을 수정하였습니다' });
   } catch (err) {
@@ -112,7 +115,6 @@ router.put('/posts/:postId/comments/:commentId', authMiddleware, async(req,res) 
 
 
 /** 4. 댓글 삭제 **/
-  // * 400 댓글 삭제에 실패한 경우
 router.delete('/posts/:postId/comments/:commentId', authMiddleware, async(req,res) => {
   try {
     const { userId } = req.user;
@@ -136,9 +138,13 @@ router.delete('/posts/:postId/comments/:commentId', authMiddleware, async(req,re
     };
 
 
-    await prisma.comments.delete({
+    const isCommentDeleted = await prisma.comments.delete({
       where: { PostId: +postId, commentId: +commentId }
     })
+
+    if (!isCommentDeleted) {
+      return res.status(401).json({ errorMessage: '댓글 삭제가 정상적으로 처리되지 않았습니다' })
+    };
 
     return res.status(200).json({ message: '댓글을 삭제하였습니다' });
   } catch (err) {
