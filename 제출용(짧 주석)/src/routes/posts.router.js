@@ -11,7 +11,6 @@ const createdSchema = joi.object({
 
 
 /** 1. 게시글 생성API **/
-  // # 412 Title, Content의 형식이 비정상적인 경우 -> catch문으로 넘김
 router.post('/posts', authMiddleware, async(req,res) => {
   try {
     const { userId, nickname } = req.user;
@@ -19,18 +18,14 @@ router.post('/posts', authMiddleware, async(req,res) => {
     const { title, content } = validation;
     
     // 여기까지 왔다 = 에러 전부 해결 -> create수행
-    const isCreated = await prisma.posts.create({ data: { UserId: userId, Nickname: nickname, title, content } });
-
-    // # 400 예외 케이스에서 처리하지 못한 에러
-    if (!isCreated) {
-      return res.status(400).json({ errorMessage: '게시글 작성에 실패하였습니다' });
-    }
+    await prisma.posts.create({ data: { UserId: userId, Nickname: nickname, title, content } });
   
     return res.status(201).json({ message: '게시글 작성에 성공하였습니다' });
   } catch (err) {
-    console.log(err)
-    console.log(err.message)
-    return res.status(412).json({ vaildationError: `제목,내용의 형식이 맞지 않습니다 => ${err.message}` })
+    if (err.name === 'ValidationError') {
+      return res.status(412).json({ vaildationError: `제목,내용의 형식이 맞지 않습니다 => ${err.message}` });
+    };
+    return res.status(400).json({ errorMessage: '게시글 작성에 실패하였습니다' });
   }
 });
 
@@ -87,7 +82,6 @@ router.get('/posts/:postId', async(req,res) => {
 
 
 /** 4. 게시글 수정 API **/
-  // *400 에러 경우..면담 후 추가하기 - catch문 뒤에
 router.put('/posts/:postId', authMiddleware, async(req,res) => {
   try {
     const { userId } = req.user; // 현재 로그인한 사람의 id
@@ -118,7 +112,10 @@ router.put('/posts/:postId', authMiddleware, async(req,res) => {
 
     return res.status(200).json({ message: '게시글을 수정하였습니다' })
   } catch (err) {
-    return res.status(412).json({ vaildationError: `제목,내용의 형식이 맞지 않습니다 => ${err.message}` });
+    if (err.name === 'ValidationError') {
+      return res.status(412).json({ vaildationError: `제목,내용의 형식이 맞지 않습니다 => ${err.message}` });
+    };
+    return res.status(400).json({ errorMessage: '게시글 수정에 실패하였습니다' });
   }
 });
 
