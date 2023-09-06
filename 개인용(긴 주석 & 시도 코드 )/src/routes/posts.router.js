@@ -36,7 +36,6 @@ router.post('/posts', authMiddleware, async(req,res) => {
     return res.status(201).json({ message: '게시글 작성에 성공하였습니다' });
   } catch (err) {
     console.log(err)
-    console.log(err.message)
     return res.status(412).json({ vaildationError: `제목,내용의 형식이 맞지 않습니다 => ${err.message}` })
   }
 });
